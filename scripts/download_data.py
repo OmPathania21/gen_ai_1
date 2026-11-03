@@ -43,7 +43,10 @@ def main() -> int:
         try:
             fetch(SCIFACT_URL, archive)
             with tarfile.open(archive) as t:
-                t.extractall(scifact)
+                if hasattr(tarfile, "data_filter"):  # safe extraction on newer Pythons
+                    t.extractall(scifact, filter="data")
+                else:
+                    t.extractall(scifact)
         except Exception as e:
             failed.append(f"SciFact ({e})")
 
