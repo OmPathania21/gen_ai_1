@@ -1,0 +1,37 @@
+# secrets
+.env
+
+# python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# generated data
+data/chroma/
+data/cache/
+data/uploads/
+*.log
+
+# run outputs: keep only the evaluation results the Evaluation page reads
+outputs/*
+!outputs/rq2_verifier.json
+!outputs/prompt_compare.json
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# downloaded datasets (recreate with: python scripts/download_data.py)
+data/scifact/
+data/sample_docs/
+
+# frontend
+web/node_modules/
+web/dist/
+web/*.tsbuildinfo
+
+# personal files not part of the project
+gen_ai/RA2411003012495_29thsept_activity.pdf
