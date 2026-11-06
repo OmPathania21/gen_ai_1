@@ -4,10 +4,26 @@ Embeds chunks with a Sentence-Transformer bi-encoder and stores them in a
 persistent ChromaDB collection (cosine similarity).
 """
 
+import threading
 from functools import lru_cache
 
 from .config import settings
 from .ingest import Chunk
+
+_client = None
+_client_lock = threading.Lock()
+
+
+def get_client():
+    """One shared ChromaDB client per process: creating two at once on the same path crashes ChromaDB."""
+    global _client
+    with _client_lock:
+        if _client is None:
+            import chromadb
+
+            settings.ensure_dirs()
+            _client = chromadb.PersistentClient(path=str(settings.chroma_dir))
+        return _client
 
 
 @lru_cache(maxsize=1)
@@ -24,10 +40,7 @@ def embed(texts: list[str]) -> list[list[float]]:
 
 class VectorIndex:
     def __init__(self, collection: str = "default"):
-        import chromadb
-
-        settings.ensure_dirs()
-        self.client = chromadb.PersistentClient(path=str(settings.chroma_dir))
+        self.client = get_client()
         self.name = collection
         self.col = self.client.get_or_create_collection(collection, metadata={"hnsw:space": "cosine"})
 

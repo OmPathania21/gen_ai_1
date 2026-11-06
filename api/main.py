@@ -11,6 +11,7 @@ rather than executed in parallel. Clients poll GET /api/jobs/{id}.
 
 import asyncio
 import json
+import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -43,14 +44,16 @@ app.add_middleware(CORSMiddleware, allow_origins=["http://localhost:5173", "http
 
 worker = ThreadPoolExecutor(max_workers=1)   # one pipeline at a time (see module docstring)
 _veritas: dict[str, Veritas] = {}
+_veritas_lock = threading.Lock()   # the page loads with parallel requests; build each pipeline once
 
 
 def get_veritas(collection: str) -> Veritas:
     if collection not in COLLECTIONS:
         raise HTTPException(404, f"Unknown collection '{collection}'")
-    if collection not in _veritas:
-        _veritas[collection] = Veritas(collection)
-    return _veritas[collection]
+    with _veritas_lock:
+        if collection not in _veritas:
+            _veritas[collection] = Veritas(collection)
+        return _veritas[collection]
 
 
 async def on_worker(fn, *args, **kwargs):
